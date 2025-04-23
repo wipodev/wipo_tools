@@ -1,0 +1,13 @@
+{
+  "search.exclude": {},
+  "terminal.integrated.profiles.windows": {
+    "PowerShell Local": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell",
+      "args": ["-NoExit", "-Command", ". '${workspaceFolder}\\.vscode\\powershell_profile.ps1'"]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell Local",
+  "powershell.integratedConsole.showOnStartup": false,
+  "powershell.integratedConsole.focusConsoleOnExecute": false
+}

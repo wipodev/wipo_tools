@@ -1,0 +1,15 @@
+node_modules/
+.vscode/history/
+dist/
+build/
+sandbox/
+.venv/
+.gradle
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.egg-info/
+*.egg
