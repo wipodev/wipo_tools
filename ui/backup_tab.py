@@ -1,12 +1,15 @@
+import os
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from app.backup import BackupManager
+from utils.resize_handler_mixin import ResizeHandlerMixin
 
-class BackupTab(ctk.CTkFrame):
+class BackupTab(ctk.CTkFrame, ResizeHandlerMixin):
     def __init__(self, master):
         super().__init__(master)
         self.manager = BackupManager()
         self.dest_folder = ""
+        self.setup_resize_listener(self.refresh_all)
 
         # grid principal de este frame
         self.grid_rowconfigure(1, weight=1)
@@ -27,18 +30,16 @@ class BackupTab(ctk.CTkFrame):
         self._ConfigFrame(body_frame)
 
     def _list_to_backup(self, parent):
-        # Área de lista (usa CTkTextbox como reemplazo de Listbox)
-        self.textbox = ctk.CTkTextbox(parent, width=200,)
-        self.textbox.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.scroll = ctk.CTkScrollableFrame(parent, width=200)
+        self.scroll.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.refresh_list()
 
         # Botonera
-        btn_frame = ctk.CTkFrame(parent)
-        btn_frame.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
-        btn_frame.grid_columnconfigure((0,1,2), weight=1)
-        ctk.CTkButton(btn_frame, text="Agregar Archivo", command=self.add_file).grid(row=0, column=0, sticky="ew", padx=5)
-        ctk.CTkButton(btn_frame, text="Agregar Carpeta", command=self.add_folder).grid(row=0, column=1, sticky="ew", padx=5)
-        ctk.CTkButton(btn_frame, text="Eliminar Seleccionado", command=self.remove_selected).grid(row=0, column=2, sticky="ew", padx=5)
+        btn_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        btn_frame.grid(row=1, column=0, padx=(5, 0), pady=(0, 10), sticky="w")
+        btn_frame.grid_columnconfigure((0,1), weight=1)
+        ctk.CTkButton(btn_frame, text="Agregar Archivo", width= 220, command=self.add_file).grid(row=0, column=0, sticky="w", padx=5)
+        ctk.CTkButton(btn_frame, text="Agregar Carpeta", width= 220, command=self.add_folder).grid(row=0, column=1, sticky="w", padx=5)
     
     def _ConfigFrame(self, parent):
         cf = ctk.CTkFrame(parent)
@@ -47,20 +48,56 @@ class BackupTab(ctk.CTkFrame):
         for r in range(5):
             cf.grid_rowconfigure(r, weight=0)
 
-        ctk.CTkLabel(cf, text="Nombre del Backup:").grid(row=0, column=0, sticky="w", padx=10, pady=(0, 5))
+        ctk.CTkLabel(cf, text="Nombre del Backup:").grid(row=0, column=0, sticky="w", padx=10, pady=(10, 5))
         self.backup_name_var = ctk.StringVar()
         ctk.CTkEntry(cf, textvariable=self.backup_name_var).grid(row=1, column=0, sticky="ew", padx=10, pady=(0,10))
 
-        ctk.CTkButton(cf, text="Seleccionar Carpeta de Destino", command=self.select_dest_folder).grid(row=2, column=0, sticky="ew", padx=10, pady=(0,10))
+        ctk.CTkButton(cf, text="Seleccionar Carpeta", command=self.select_dest_folder).grid(row=3, column=0, sticky="w", padx=10, pady=(0,10))
         self.dest_folder_label = ctk.CTkLabel(cf, text="Destino: No seleccionado")
-        self.dest_folder_label.grid(row=3, column=0, sticky="w", padx=10, pady=(0,10))
+        self.dest_folder_label.grid(row=2, column=0, sticky="w", padx=10, pady=(20,10))
 
-        ctk.CTkButton(cf, text="Hacer Backup", command=self.perform_backup).grid(row=4, column=0, padx=10, sticky="ew")
+        ctk.CTkButton(cf, text="Hacer Backup", width=200, height=40, command=self.perform_backup).grid(row=4, column=0, padx=10, pady=(20, 0))
 
     def refresh_list(self):
-        self.textbox.delete("0.0", "end")
-        for p in self.manager.paths_to_backup:
-            self.textbox.insert("end", p + "\n")  # usa CTkTextbox :contentReference[oaicite:3]{index=3}
+        for child in self.scroll.winfo_children():
+            child.destroy()
+
+        width = self.scroll.winfo_width()
+        max_chars = max(int(width / 7), 40)
+
+        for i, route in enumerate(self.manager.paths_to_backup):
+            item_frame = ctk.CTkFrame(self.scroll)
+            item_frame.grid(row=i, column=0, sticky="ew", padx=5, pady=2)
+            item_frame.grid_columnconfigure(0, weight=0)
+
+            # Etiqueta con la ruta cortada
+            route_closed = self.cut_route(route, max_chars)
+
+            # Etiqueta con la ruta
+            label = ctk.CTkLabel(item_frame, text=route_closed, anchor="e")
+            label.grid(row=0, column=1, sticky="ew", padx=(0, 10))
+
+            # Botón eliminar
+            delete_button = ctk.CTkButton(
+                item_frame,
+                text="x",
+                width=22,
+                height=22,
+                fg_color="#e74c3c", hover_color="#c0392b",
+                text_color="white",
+                command=lambda r=route: self.remove_item(r)
+            )
+            delete_button.grid(row=0, column=0, padx=(0, 5))
+
+    def cut_route(self, route, max_chars = 50):
+        if len(route) <= max_chars:
+            return route
+        visible_part = max_chars // 2 - 2
+        return route[:visible_part] + "..." + route[-visible_part:]
+
+    def refresh_all(self):
+        self.refresh_list()
+        self.update_dest_folder_label()
 
     def add_file(self):
         path = filedialog.askopenfilename()
@@ -74,17 +111,28 @@ class BackupTab(ctk.CTkFrame):
             self.manager.add_path(path)
             self.refresh_list()
 
-    def remove_selected(self):
-        selected = self.listbox.curselection()
-        for i in reversed(selected):
-            self.manager.remove_path(i)
-        self.refresh_listbox()
+    def remove_item(self, route):
+        if route in self.manager.paths_to_backup:
+          self.manager.paths_to_backup.remove(route)
+          self.manager.save_backup_list()
+          self.refresh_list()
 
     def select_dest_folder(self):
         path = filedialog.askdirectory()
         if path:
             self.dest_folder = path
-            self.dest_folder_label.configure(text=f"Destino: {path}")
+            self.update_dest_folder_label()
+
+    def update_dest_folder_label(self):
+        if not self.dest_folder:
+            self.dest_folder_label.configure(text="Destino: No seleccionado")
+        else:
+            label_width = self.dest_folder_label.winfo_width()
+            if (label_width - 10) < len(self.dest_folder):
+              folder_name = os.path.basename(self.dest_folder)
+              self.dest_folder_label.configure(text=f"Destino: {folder_name}")
+            else:
+              self.dest_folder_label.configure(text=f"Destino: {self.dest_folder}")
 
     def perform_backup(self):
         if not self.dest_folder:

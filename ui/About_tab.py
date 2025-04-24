@@ -29,7 +29,7 @@ class AboutTab(ctk.CTkFrame):
         # Versión
         ctk.CTkLabel(
             self,
-            text="Versión: 0.1.0_dev1",
+            text="Versión: 0.1.0_alpha1",
             font=("Consolas", 12)
         ).grid(row=2, column=0, padx=20, pady=(0, 10))
 

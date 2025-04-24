@@ -2,7 +2,7 @@ import customtkinter as ctk
 
 from ui.tab_manager import TabManager
 from ui.backup_tab import BackupTab
-from ui.About_tab import AboutTab
+from ui.about_tab import AboutTab
 
 class WipoToolsApp(ctk.CTk):
     def __init__(self):
