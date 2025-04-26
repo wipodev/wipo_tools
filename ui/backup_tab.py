@@ -1,13 +1,13 @@
 import os
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from app.backup import BackupManager
+from app.settings_manager import SettingsManager
 from utils.resize_handler_mixin import ResizeHandlerMixin
 
 class BackupTab(ctk.CTkFrame, ResizeHandlerMixin):
     def __init__(self, master):
         super().__init__(master)
-        self.manager = BackupManager()
+        self.wiconfig = SettingsManager()
         self.dest_folder = ""
         self.setup_resize_listener(self.refresh_all)
 
@@ -49,14 +49,15 @@ class BackupTab(ctk.CTkFrame, ResizeHandlerMixin):
             cf.grid_rowconfigure(r, weight=0)
 
         ctk.CTkLabel(cf, text="Nombre del Backup:").grid(row=0, column=0, sticky="w", padx=10, pady=(10, 5))
-        self.backup_name_var = ctk.StringVar()
+        self.backup_name_var = ctk.StringVar(value=self.wiconfig.backup_name)
         ctk.CTkEntry(cf, textvariable=self.backup_name_var).grid(row=1, column=0, sticky="ew", padx=10, pady=(0,10))
 
         ctk.CTkButton(cf, text="Seleccionar Carpeta", command=self.select_dest_folder).grid(row=3, column=0, sticky="w", padx=10, pady=(0,10))
         self.dest_folder_label = ctk.CTkLabel(cf, text="Destino: No seleccionado")
         self.dest_folder_label.grid(row=2, column=0, sticky="w", padx=10, pady=(20,10))
 
-        ctk.CTkButton(cf, text="Hacer Backup", width=200, height=40, command=self.perform_backup).grid(row=4, column=0, padx=10, pady=(20, 0))
+        ctk.CTkButton(cf, text="Hacer Backup", width=200, height=40, command=self.perform_backup, fg_color="#27ae60",
+    hover_color="#219150", text_color="black", font=("Segoe UI", 14, "bold")).grid(row=4, column=0, padx=10, pady=(20, 0))
 
     def refresh_list(self):
         for child in self.scroll.winfo_children():
@@ -64,8 +65,7 @@ class BackupTab(ctk.CTkFrame, ResizeHandlerMixin):
 
         width = self.scroll.winfo_width()
         max_chars = max(int(width / 7), 40)
-
-        for i, route in enumerate(self.manager.paths_to_backup):
+        for i, route in enumerate(self.wiconfig.get_paths()):
             item_frame = ctk.CTkFrame(self.scroll)
             item_frame.grid(row=i, column=0, sticky="ew", padx=5, pady=2)
             item_frame.grid_columnconfigure(0, weight=0)
@@ -102,19 +102,18 @@ class BackupTab(ctk.CTkFrame, ResizeHandlerMixin):
     def add_file(self):
         path = filedialog.askopenfilename()
         if path:
-            self.manager.add_path(path)
+            self.wiconfig.add_path(path)
             self.refresh_list()
 
     def add_folder(self):
         path = filedialog.askdirectory()
         if path:
-            self.manager.add_path(path)
+            self.wiconfig.add_path(path)
             self.refresh_list()
 
     def remove_item(self, route):
-        if route in self.manager.paths_to_backup:
-          self.manager.paths_to_backup.remove(route)
-          self.manager.save_backup_list()
+        if route in self.wiconfig.get_paths():
+          self.wiconfig.remove_path(route)
           self.refresh_list()
 
     def select_dest_folder(self):
@@ -145,7 +144,7 @@ class BackupTab(ctk.CTkFrame, ResizeHandlerMixin):
             return
 
         try:
-            result_path = self.manager.perform_backup(self.dest_folder, backup_name)
+            result_path = self.wiconfig.perform_backup(self.dest_folder, backup_name)
             messagebox.showinfo("Backup completado", f"Backup creado en:\n{result_path}")
         except Exception as e:
             messagebox.showerror("Error", str(e))

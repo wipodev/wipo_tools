@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import webbrowser
+from app import __version__
 
 class AboutTab(ctk.CTkFrame):
     """
@@ -29,7 +30,7 @@ class AboutTab(ctk.CTkFrame):
         # Versión
         ctk.CTkLabel(
             self,
-            text="Versión: 0.1.0_alpha1",
+            text=__version__,
             font=("Consolas", 12)
         ).grid(row=2, column=0, padx=20, pady=(0, 10))
 
