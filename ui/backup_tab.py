@@ -40,7 +40,7 @@ class BackupTab(ctk.CTkFrame, ResizeHandlerMixin):
         btn_frame.grid_columnconfigure((0,1), weight=1)
         ctk.CTkButton(btn_frame, text="Agregar Archivo", width= 220, command=self.add_file).grid(row=0, column=0, sticky="w", padx=5)
         ctk.CTkButton(btn_frame, text="Agregar Carpeta", width= 220, command=self.add_folder).grid(row=0, column=1, sticky="w", padx=5)
-    
+
     def _ConfigFrame(self, parent):
         cf = ctk.CTkFrame(parent)
         cf.grid(row=0, column=1, padx=(0, 10), pady=10, sticky="nsew")
