@@ -24,7 +24,7 @@ exe = EXE(
     [],
     name='WipoTools',
     version='setup_version.txt',
-    icon='assets/logo.svg',
+    icon='assets/logo.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
