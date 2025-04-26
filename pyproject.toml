@@ -1,0 +1,33 @@
+[tool.tbump]
+github_url = "https://github.com/wipodev/wipo_tools"
+
+[tool.tbump.version]
+current = "0.0.0"
+regex = '''
+  (?P<major>\d+)
+  \.
+  (?P<minor>\d+)
+  \.
+  (?P<patch>\d+)
+  '''
+
+[tool.tbump.git]
+message_template = "release: version {new_version} 🎉"
+tag_template = "v{new_version}"
+
+# For each file to patch, add a [[tool.tbump.file]] config
+# section containing the path of the file, relative to the
+# tbump.toml location.
+[[tool.tbump.file]]
+src = "app/__init__.py"
+search = '__version__ = "{current_version}"'
+
+[[tool.tbump.before_commit]]
+name = "prehook"
+cmd= "python scripts/prehook.py {new_version}"
+
+# Or run some commands after the git tag and the branch
+# have been pushed:
+#  [[tool.tbump.after_push]]
+#  name = "publish"
+#  cmd = "./publish.sh"
