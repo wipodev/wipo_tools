@@ -2,7 +2,7 @@
 github_url = "https://github.com/wipodev/wipo_tools"
 
 [tool.tbump.version]
-current = "0.0.0"
+current = "0.1.0"
 regex = '''
   (?P<major>\d+)
   \.
